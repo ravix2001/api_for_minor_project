@@ -44,11 +44,12 @@ def setup_driver():
     options.add_argument('--remote-debugging-port=9222')
     
     # Specify Chrome binary path for Render
-    chrome_binary = "/tmp/chrome/opt/google/chrome/google-chrome"
+    chrome_binary = "/tmp/chrome/chrome-linux/chrome"
+    chromedriver_binary = "/tmp/chrome/chromedriver-linux64/chromedriver"
     if os.path.exists(chrome_binary):
         options.binary_location = chrome_binary
 
-    service = Service(ChromeDriverManager().install())
+    service = Service(chromedriver_binary)
     return webdriver.Chrome(service=service, options=options)
 
 def scrape_reviews(url):
