@@ -126,14 +126,14 @@ def scrape_reviews(url):
     return len(reviews_list)
 
 # Load the Logistic Regression model and vectorizer
-with open('C:/Users/Ravi/api/model_LogisticRegression.pkl', 'rb') as file:
+with open('model_LogisticRegression.pkl', 'rb') as file:
     model = pickle.load(file)
 
-with open('C:/Users/Ravi/api/vectorizer.pkl', 'rb') as file:
+with open('vectorizer.pkl', 'rb') as file:
     vectorizer = pickle.load(file)
 
 # Function to analyze reviews using the Logistic Regression model
-def analyze_reviews_with_rf():
+def analyze_reviews():
     # Load the scraped reviews
     df = pd.read_csv('reviews.csv')
 
@@ -174,13 +174,6 @@ def analyze_reviews_with_rf():
     # Apply mapping to predictions
     df['sentiment'] = [sentiment_mapping[pred] for pred in predictions]
 
-    # # Calculate the percentage of each sentiment label
-    # sentiment_counts = df['sentiment'].value_counts(normalize=True) * 100
-
-    # positive_percentage = sentiment_counts.get("Positive", 0)
-    # negative_percentage = sentiment_counts.get("Negative", 0)
-    # neutral_percentage = sentiment_counts.get("Neutral", 0)
-
     sentiment_distribution = df['sentiment'].value_counts(normalize=True).to_dict()
     # Ensure keys are lowercase for frontend compatibility
     sentiment_distribution = {k.lower(): v * 100 for k, v in sentiment_distribution.items()}
@@ -205,12 +198,6 @@ def analyze_reviews_with_rf():
     # Calculate the overall compound score
     compound_score = (df['compound'].mean()+1)/2 * 10  # Scale compound score to 0-10
 
-    # # Display results
-    # print("SENTIMENT DISTRIBUTION".center(50, '-'))
-    # print(f"Positive: {positive_percentage:.2f}%")
-    # print(f"Negative: {negative_percentage:.2f}%")
-    # print(f"Neutral: {neutral_percentage:.2f}%")
-
     print("CONFIDENCE SCORE".center(50, '-'))
     # Print the overall compound score
     print(f"Overall Compound Score for the product is: {compound_score:.2f} out of 10")
@@ -222,7 +209,7 @@ def analyze_reviews_with_rf():
         'sentiment_plot': 'static/sentiment.png'
     }
 
-@app.route('/analyze', methods=['POST'])
+@app.route('/', methods=['POST'])
 def analyze():
     """API endpoint to analyze product reviews."""
     try:
@@ -234,8 +221,8 @@ def analyze():
         if num_reviews == 0:
             return jsonify({"error": "No reviews found"}), 404
             
-        # Analyze the reviews using the RandomForest model
-        results = analyze_reviews_with_rf()
+        # Analyze the reviews using the Logistic Regression model
+        results = analyze_reviews()
         
         # Visualization: Sentiment Distribution
         sentiment_counts = results['sentiment_distribution']
@@ -261,5 +248,9 @@ def analyze():
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+# if __name__ == '__main__':
+#     app.run(port=8000, debug=True)
+
 if __name__ == '__main__':
-    app.run(port=8000, debug=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
