@@ -44,7 +44,7 @@ def setup_driver():
     options.add_argument('--remote-debugging-port=9222')
     
     # Specify Chrome binary path for Render
-    chrome_binary = "/usr/bin/google-chrome-stable"
+    chrome_binary = "/tmp/chrome/opt/google/chrome/google-chrome"
     if os.path.exists(chrome_binary):
         options.binary_location = chrome_binary
 
