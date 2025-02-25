@@ -39,7 +39,15 @@ def setup_driver():
     options = webdriver.ChromeOptions()
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
+    options.add_argument('--headless')  # Add headless mode
+    options.add_argument('--disable-gpu')
+    options.add_argument('--remote-debugging-port=9222')
+    
+    # Specify Chrome binary path for Render
+    chrome_binary = "/usr/bin/google-chrome-stable"
+    if os.path.exists(chrome_binary):
+        options.binary_location = chrome_binary
+
     service = Service(ChromeDriverManager().install())
     return webdriver.Chrome(service=service, options=options)
 
