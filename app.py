@@ -21,109 +21,109 @@ from langdetect import detect
 app = Flask(__name__)
 CORS(app)
 
-def retry_click(driver, selector, max_attempts=3):
-    """Retries clicking an element if it fails."""
-    for attempt in range(max_attempts):
-        try:
-            element = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, selector)))
-            driver.execute_script("arguments[0].click();", element)
-            return True
-        except:
-            print(f"Retry {attempt + 1} failed")
-            time.sleep(2)
-    return False
+# def retry_click(driver, selector, max_attempts=3):
+#     """Retries clicking an element if it fails."""
+#     for attempt in range(max_attempts):
+#         try:
+#             element = WebDriverWait(driver, 10).until(
+#                 EC.element_to_be_clickable((By.CSS_SELECTOR, selector)))
+#             driver.execute_script("arguments[0].click();", element)
+#             return True
+#         except:
+#             print(f"Retry {attempt + 1} failed")
+#             time.sleep(2)
+#     return False
 
-def setup_driver():
-    """Sets up the Selenium WebDriver with necessary options."""
-    options = webdriver.ChromeOptions()
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    service = Service(ChromeDriverManager().install())
-    return webdriver.Chrome(service=service, options=options)
+# def setup_driver():
+#     """Sets up the Selenium WebDriver with necessary options."""
+#     options = webdriver.ChromeOptions()
+#     options.add_argument('--no-sandbox')
+#     options.add_argument('--disable-dev-shm-usage')
+#     options.add_argument('--window-size=1920,1080')
+#     service = Service(ChromeDriverManager().install())
+#     return webdriver.Chrome(service=service, options=options)
 
-def scrape_reviews(url):
-    """Scrapes reviews from Daraz and saves them in a CSV file."""
-    driver = setup_driver()
-    wait = WebDriverWait(driver, 20)
-    reviews_list = []
+# def scrape_reviews(url):
+#     """Scrapes reviews from Daraz and saves them in a CSV file."""
+#     driver = setup_driver()
+#     wait = WebDriverWait(driver, 20)
+#     reviews_list = []
     
-    try:
-        # Load page and wait
-        print("Loading URL...")
-        driver.get(url)
-        time.sleep(5)
+#     try:
+#         # Load page and wait
+#         print("Loading URL...")
+#         driver.get(url)
+#         time.sleep(5)
         
-        # Scroll steps to trigger lazy loading
-        for scroll in range(0, 2000, 200):
-            driver.execute_script(f"window.scrollTo(0, {scroll})")
-            time.sleep(1)
+#         # Scroll steps to trigger lazy loading
+#         for scroll in range(0, 2000, 200):
+#             driver.execute_script(f"window.scrollTo(0, {scroll})")
+#             time.sleep(1)
         
-        # Wait for and click the reviews section
-        print("Finding reviews section...")
-        review_tab = wait.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, '[data-spm-anchor-id*="review"]')))
-        driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth'});", review_tab)
-        time.sleep(2)
+#         # Wait for and click the reviews section
+#         print("Finding reviews section...")
+#         review_tab = wait.until(EC.element_to_be_clickable(
+#             (By.CSS_SELECTOR, '[data-spm-anchor-id*="review"]')))
+#         driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth'});", review_tab)
+#         time.sleep(2)
         
-        if not retry_click(driver, '[data-spm-anchor-id*="review"]'):
-            print("Failed to click reviews tab")
-            return 0
+#         if not retry_click(driver, '[data-spm-anchor-id*="review"]'):
+#             print("Failed to click reviews tab")
+#             return 0
         
-        page = 1
-        while True:
-            print(f"Processing page {page}")
+#         page = 1
+#         while True:
+#             print(f"Processing page {page}")
             
-            # Wait for reviews container
-            reviews = wait.until(EC.presence_of_all_elements_located(
-                (By.CSS_SELECTOR, '.mod-reviews .item')))
+#             # Wait for reviews container
+#             reviews = wait.until(EC.presence_of_all_elements_located(
+#                 (By.CSS_SELECTOR, '.mod-reviews .item')))
             
-            for review in reviews:
-                try:
-                    text = review.find_element(By.CSS_SELECTOR, '.content').text
-                    date = review.find_element(By.CSS_SELECTOR, '.top').text
-                    author = review.find_element(By.CSS_SELECTOR, '.middle').text
+#             for review in reviews:
+#                 try:
+#                     text = review.find_element(By.CSS_SELECTOR, '.content').text
+#                     date = review.find_element(By.CSS_SELECTOR, '.top').text
+#                     author = review.find_element(By.CSS_SELECTOR, '.middle').text
                     
-                    if text.strip():
-                        reviews_list.append({
-                            'reviewText': text.strip(),
-                            'reviewDate': date.strip(),
-                            'authorName': author.strip()
-                        })
-                        print(f"Found review #{len(reviews_list)}")
-                except StaleElementReferenceException:
-                    continue
+#                     if text.strip():
+#                         reviews_list.append({
+#                             'reviewText': text.strip(),
+#                             'reviewDate': date.strip(),
+#                             'authorName': author.strip()
+#                         })
+#                         print(f"Found review #{len(reviews_list)}")
+#                 except StaleElementReferenceException:
+#                     continue
             
-            # Save progress
-            if reviews_list:
-                df = pd.DataFrame(reviews_list)
-                df.to_csv('reviews.csv', index=False)
+#             # Save progress
+#             if reviews_list:
+#                 df = pd.DataFrame(reviews_list)
+#                 df.to_csv('reviews.csv', index=False)
             
-            # Try clicking the next page
-            try:
+#             # Try clicking the next page
+#             try:
                 
-                next_button = driver.find_element(By.XPATH, '//button[contains(@class, "next-pagination-item next")]')
-                next_button.click()
-                if 'ant-pagination-disabled' in next_button.get_attribute("class"):
-                    print("No more pages")
-                    break
-                driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth'});", next_button)
-                time.sleep(2)
-                driver.execute_script("arguments[0].click();", next_button)
-                page += 1
-                time.sleep(3)
-            except Exception as e:
-                print(f"Pagination error: {str(e)}")
-                print("No more pages")
-                break
+#                 next_button = driver.find_element(By.XPATH, '//button[contains(@class, "next-pagination-item next")]')
+#                 next_button.click()
+#                 if 'ant-pagination-disabled' in next_button.get_attribute("class"):
+#                     print("No more pages")
+#                     break
+#                 driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth'});", next_button)
+#                 time.sleep(2)
+#                 driver.execute_script("arguments[0].click();", next_button)
+#                 page += 1
+#                 time.sleep(3)
+#             except Exception as e:
+#                 print(f"Pagination error: {str(e)}")
+#                 print("No more pages")
+#                 break
                 
-    except Exception as e:
-        print(f"Error: {str(e)}")
-    finally:
-        driver.quit()
+#     except Exception as e:
+#         print(f"Error: {str(e)}")
+#     finally:
+#         driver.quit()
     
-    return len(reviews_list)
+#     return len(reviews_list)
 
 # Load the Logistic Regression model and vectorizer
 with open('model_LogisticRegression.pkl', 'rb') as file:
@@ -213,13 +213,13 @@ def analyze_reviews():
 def analyze():
     """API endpoint to analyze product reviews."""
     try:
-        url = request.json.get('url')
-        if not url:
-            return jsonify({"error": "URL is required"}), 400
+        # url = request.json.get('url')
+        # if not url:
+        #     return jsonify({"error": "URL is required"}), 400
             
-        num_reviews = scrape_reviews(url)
-        if num_reviews == 0:
-            return jsonify({"error": "No reviews found"}), 404
+        # num_reviews = scrape_reviews(url)
+        # if num_reviews == 0:
+        #     return jsonify({"error": "No reviews found"}), 404
             
         # Analyze the reviews using the Logistic Regression model
         results = analyze_reviews()
