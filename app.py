@@ -39,17 +39,8 @@ def setup_driver():
     options = webdriver.ChromeOptions()
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--headless')  # Add headless mode
-    options.add_argument('--disable-gpu')
-    options.add_argument('--remote-debugging-port=9222')
-    
-    # Specify Chrome binary path for Render
-    chrome_binary = "/tmp/chrome/chrome-linux/chrome"
-    chromedriver_binary = "/tmp/chrome/chromedriver-linux64/chromedriver"
-    if os.path.exists(chrome_binary):
-        options.binary_location = chrome_binary
-
-    service = Service(chromedriver_binary)
+    options.add_argument('--window-size=1920,1080')
+    service = Service(ChromeDriverManager().install())
     return webdriver.Chrome(service=service, options=options)
 
 def scrape_reviews(url):
@@ -258,8 +249,5 @@ def analyze():
         print(f"Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-# if __name__ == '__main__':
-#     app.run(port=8000, debug=True)
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
+    app.run(port=8000, debug=True)
